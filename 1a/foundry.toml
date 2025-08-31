@@ -2,9 +2,16 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+test = "test"
+
+
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 
 remappings = [
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"
 ]
+
+[rpc_endpoints]
+Coston2 = "${RPC_URL}"
+sepolia = "${SEPOLIA}"

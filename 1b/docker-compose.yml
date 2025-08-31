@@ -26,7 +26,16 @@ services:
       - --datadir=/root/.ethereum
       - --syncmode=snap # 또는 full, light
       - --cache=1024
-  # geth-init:
+      - --unlock=0
+  geth-init:
+    image: ethereum/client-go:v1.15.0
+    container_name: geth-init
+    depends_on:
+      - geth # 'ethereum' 서비스가 시작된 후에 실행
+    volumes:
+      - ./geth-init:/scripts # 호스트의 geth-init 폴더를 컨테이너의 /scripts 폴더에 연결
+    entrypoint: /bin/sh                          # <--- 이 줄을 추가하세요.
+    command: -c "/scripts/entrypoint.sh" 
   # graph-ipfs:
   # graph-postgres:
   # graph-redis:
