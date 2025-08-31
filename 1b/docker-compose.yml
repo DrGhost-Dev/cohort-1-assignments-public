@@ -1,11 +1,31 @@
 version: "3.8"
 
-# services:
+services:
   # caddy:
   # ngrok:
   # sc-deployer:
   # sc-deployment-server:
-  # geth:
+  geth:
+    image: ethereum/client-go:v1.15.0
+    container_name: geth-node
+    ports:
+      - "8545:8545" # HTTP JSON-RPC
+      - "8546:8546" # WebSocket JSON-RPC
+      - "30303:30303" # P2P Discovery (TCP)
+      - "30303:30303/udp" # P2P Discovery (UDP)
+    volumes:
+      - ./geth-data:/root/.ethereum
+    command:
+      - --http
+      - --http.addr=0.0.0.0
+      - --http.api=eth,net,web3
+      - --ws
+      - --ws.addr=0.0.0.0
+      - --ws.api=eth,net,web3
+      - --authrpc.jwtsecret=/root/.ethereum/jwt.hex
+      - --datadir=/root/.ethereum
+      - --syncmode=snap # 또는 full, light
+      - --cache=1024
   # geth-init:
   # graph-ipfs:
   # graph-postgres:
