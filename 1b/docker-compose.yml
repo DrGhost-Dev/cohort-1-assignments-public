@@ -6,36 +6,53 @@ services:
   # sc-deployer:
   # sc-deployment-server:
   geth:
-    image: ethereum/client-go:v1.15.0
-    container_name: geth-node
+    image: ethereum/client-go:stable
+    container_name: geth
     ports:
-      - "8545:8545" # HTTP JSON-RPC
-      - "8546:8546" # WebSocket JSON-RPC
-      - "30303:30303" # P2P Discovery (TCP)
-      - "30303:30303/udp" # P2P Discovery (UDP)
+      - "8545:8545" # HTTP-RPC 포트
+      - "8546:8546" # WebSocket-RPC 포트
+      - "30303:30303" # P2P 네트워크 포트 (UDP/TCP)
     volumes:
       - ./geth-data:/root/.ethereum
+      - ./shared-data:/shared 
+      - ./geth-init:/app 
+      #- ./geth-data/genesis.json:/root/genesis.json
     command:
+      - --datadir=/root/.ethereum
+      #- --networkid=1337
       - --http
       - --http.addr=0.0.0.0
-      - --http.api=eth,net,web3
+      - --http.port=8545
+      - --http.api=eth,net,web3,personal
+      - --http.corsdomain=*
+      - --http.vhosts=*
       - --ws
       - --ws.addr=0.0.0.0
-      - --ws.api=eth,net,web3
-      - --authrpc.jwtsecret=/root/.ethereum/jwt.hex
-      - --datadir=/root/.ethereum
-      - --syncmode=snap # 또는 full, light
-      - --cache=1024
-      - --unlock=0
+      - --ws.port=8546
+      - --ws.origins=*
+      - --nodiscover
+      - --dev
+      - --mine
+      - --miner.etherbase=0x0000000000000000000000000000000000000000
+    networks:
+      - geth_network
   geth-init:
-    image: ethereum/client-go:v1.15.0
-    container_name: geth-init
+    build: ./geth-init
+    container_name: geth_init
     depends_on:
       - geth # 'ethereum' 서비스가 시작된 후에 실행
     volumes:
-      - ./geth-init:/scripts # 호스트의 geth-init 폴더를 컨테이너의 /scripts 폴더에 연결
-    entrypoint: /bin/sh                          # <--- 이 줄을 추가하세요.
-    command: -c "/scripts/entrypoint.sh" 
+      - ./geth-init:/app # 스크립트 파일 마운트
+      - ./shared-data:/shared # 초기화 완료 신호를 위한 공유 볼륨
+    working_dir: /app
+    entrypoint: ["/app/entrypoint.sh"] # 컨테이너 시작 시 실행할 스크립트
+    networks:
+      - geth_network
+networks:
+  geth_network:
+    name: geth_network
+
+
   # graph-ipfs:
   # graph-postgres:
   # graph-redis:
