@@ -1,44 +1,151 @@
 version: "3.8"
 
 services:
-  # caddy:
-  # ngrok:
-  # sc-deployer:
-  # sc-deployment-server:
-  geth:
-    image: ethereum/client-go:v1.15.0
-    container_name: geth-node
+  caddy:
+    image: caddy:2.7-alpine
+    container_name: caddy
     ports:
-      - "8545:8545" # HTTP JSON-RPC
-      - "8546:8546" # WebSocket JSON-RPC
-      - "30303:30303" # P2P Discovery (TCP)
-      - "30303:30303/udp" # P2P Discovery (UDP)
+      - "8080:80"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      - geth
+    networks:
+      - geth_network
+  # ngrok:
+  sc-deployment-server:
+    image: caddy:2.7-alpine
+    container_name: sc-deployment-server
+    ports:
+      - "8081:80"
+    volumes:
+      - ./sc-deployment-server/Caddyfile:/etc/caddy/Caddyfile
+      # serve deployment.json
+      - ./sc-deployer:/usr/share/caddy
+    depends_on:
+      - sc-deployer
+    networks:
+      - geth_network
+  geth:
+    image: ethereum/client-go:stable
+    container_name: geth
+    ports:
+      - "8545:8545"
+      - "8546:8546"
+      - "30303:30303"
     volumes:
       - ./geth-data:/root/.ethereum
+      - ./shared-data:/shared 
+      - ./geth-init:/app 
+      #- ./geth-data/genesis.json:/root/genesis.json
     command:
+      - --datadir=/root/.ethereum
+      #- --networkid=1337
       - --http
       - --http.addr=0.0.0.0
-      - --http.api=eth,net,web3
+      - --http.port=8545
+      - --http.api=eth,net,web3,personal
+      - --http.corsdomain=*
+      - --http.vhosts=*
       - --ws
       - --ws.addr=0.0.0.0
-      - --ws.api=eth,net,web3
-      - --authrpc.jwtsecret=/root/.ethereum/jwt.hex
-      - --datadir=/root/.ethereum
-      - --syncmode=snap # 또는 full, light
-      - --cache=1024
-      - --unlock=0
+      - --ws.port=8546
+      - --ws.origins=*
+      - --nodiscover
+      - --dev
+      - --mine
+      - --miner.etherbase=0x0000000000000000000000000000000000000000
+    networks:
+      - geth_network
   geth-init:
-    image: ethereum/client-go:v1.15.0
+    build: ./geth-init
     container_name: geth-init
     depends_on:
-      - geth # 'ethereum' 서비스가 시작된 후에 실행
+      - geth 
     volumes:
-      - ./geth-init:/scripts # 호스트의 geth-init 폴더를 컨테이너의 /scripts 폴더에 연결
-    entrypoint: /bin/sh                          # <--- 이 줄을 추가하세요.
-    command: -c "/scripts/entrypoint.sh" 
-  # graph-ipfs:
+      - ./geth-init:/app # 스크립트 파일 마운트
+      - ./shared-data:/shared # 초기화 완료 신호를 위한 공유 볼륨
+    working_dir: /app
+    entrypoint: ["/app/entrypoint.sh"]
+    networks:
+      - geth_network
+  sc-deployer:
+    image: foundry/custom:v1
+    platform: linux/arm64
+    container_name: sc-deployer
+    user: root
+    volumes:
+      - ./sc-deployer:/workspace
+      - ./shared-data:/shared
+    working_dir: /workspace
+    entrypoint: ["/bin/sh", "/workspace/entrypoint.sh"]
+    depends_on:
+      - geth
+    networks:
+      - geth_network
+
+
+
   # graph-postgres:
+  #   image: postgres:14
+  #   container_name: graph_postgres
+  #   environment:
+  #     POSTGRES_USER: ${POSTGRES_USER}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  #     POSTGRES_DB: ${POSTGRES_DB}
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - geth_network
+
+  # # graph-ipfs: 서브그래프 데이터 저장을 위한 IPFS 노드
+  # graph-ipfs:
+  #   image: graphprotocol/ipfs-node
+  #   container_name: graph_ipfs
+  #   ports:
+  #     - "5001:5001" # IPFS API
+  #   volumes:
+  #     - ipfs-data:/data/ipfs
+  #   networks:
+  #     - geth_network
+
+  # # graph-redis: 캐싱을 위한 Redis
   # graph-redis:
+  #   image: redis:latest
+  #   container_name: graph_redis
+  #   ports:
+  #     - "6379:6379"
+  #   networks:
+  #     - geth_network
+
+  # # graph-node: The Graph의 핵심 인덱싱 노드
   # graph-node:
+  #   image: graphprotocol/graph-node
+  #   container_name: graph_node
+  #   depends_on:
+  #     - graph-postgres
+  #     - graph-ipfs
+  #     - geth
+  #   ports:
+  #     - "8000:8000" # JSON-RPC
+  #     - "8001:8001" # GraphQL
+  #     - "8020:8020" # Index Node
+  #   environment:
+  #     postgres_host: graph-postgres
+  #     postgres_user: ${POSTGRES_USER}
+  #     postgres_pass: ${POSTGRES_PASSWORD}
+  #     postgres_db: ${POSTGRES_DB}
+  #     ipfs: 'graph_ipfs:5001'
+  #     redis: 'graph_redis:6379'
+  #     # geth 노드를 'dev-chain'이라는 이름으로 연결
+  #     ethereum: 'dev-chain:http://geth:8545'
+  #   networks:
+  #     - geth_network
+
+networks:
+  geth_network:
+    driver: bridge
 
   # blockscout: should be another docker-compose.yml file from https://github.com/blockscout/blockscout/tree/master/docker-compose. Don't create a container in this file.

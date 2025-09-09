@@ -17,12 +17,12 @@ contract MiniAMMScript is Script {
         vm.startBroadcast(deployKey);
 
         // Deploy mock ERC20 tokens
-        //token0 = new MockERC20();
-        //token1 = new MockERC20("tokenB", "TB");
-        address tokenA = 0x6e9e41dCB609089D9De5B47AcA07d213E0AB3C41;
-        address tokenB = 0x6E840AA1Ba90bF86D0dE1590Cd2eC95d9aE59751;
+        MockERC20 token0 = new MockERC20("tokenA", "TA");
+        MockERC20 token1 = new MockERC20("tokenB", "TB");
+        // address tokenA = 0x6e9e41dCB609089D9De5B47AcA07d213E0AB3C41;
+        // address tokenB = 0x6E840AA1Ba90bF86D0dE1590Cd2eC95d9aE59751;
         // Deploy MiniAMM with the tokens
-        miniAMM = new MiniAMM(tokenA, tokenB);
+        miniAMM = new MiniAMM(address(token0), address(token1));
 
         vm.stopBroadcast();
     }
