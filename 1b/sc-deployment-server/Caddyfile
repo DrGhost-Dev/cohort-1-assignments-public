@@ -1,0 +1,11 @@
+# sc-deployment-server/Caddyfile
+:80 {
+    # 웹 서버의 루트 디렉토리를 지정
+    root * /usr/share/caddy
+    
+    # 파일 서빙 기능 활성화
+    file_server
+
+    # 외부(브라우저 등)에서 이 json 파일에 접근할 수 있도록 CORS 헤더 추가
+    header Access-Control-Allow-Origin *
+}
