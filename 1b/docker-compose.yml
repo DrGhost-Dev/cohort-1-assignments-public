@@ -1,31 +1,9 @@
 version: "3.8"
 
 services:
-  caddy:
-    image: caddy:2.7-alpine
-    container_name: caddy
-    ports:
-      - "8080:80"
-    volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
-    depends_on:
-      - geth
-    networks:
-      - geth_network
+  #caddy:
   # ngrok:
-  sc-deployment-server:
-    image: caddy:2.7-alpine
-    container_name: sc-deployment-server
-    ports:
-      - "8081:80"
-    volumes:
-      - ./sc-deployment-server/Caddyfile:/etc/caddy/Caddyfile
-      # serve deployment.json
-      - ./sc-deployer:/usr/share/caddy
-    depends_on:
-      - sc-deployer
-    networks:
-      - geth_network
+  #sc-deployment-server:
   geth:
     image: ethereum/client-go:stable
     container_name: geth
@@ -69,83 +47,12 @@ services:
     entrypoint: ["/app/entrypoint.sh"]
     networks:
       - geth_network
-  sc-deployer:
-    image: foundry/custom:v1
-    platform: linux/arm64
-    container_name: sc-deployer
-    user: root
-    volumes:
-      - ./sc-deployer:/workspace
-      - ./shared-data:/shared
-    working_dir: /workspace
-    entrypoint: ["/bin/sh", "/workspace/entrypoint.sh"]
-    depends_on:
-      - geth
-    networks:
-      - geth_network
+  #sc-deployer:
+  #graph-ipfs:
+  #graph-postgres:
+  #graph-redis:
+  #graph-node:
 
 
-
-  # graph-postgres:
-  #   image: postgres:14
-  #   container_name: graph_postgres
-  #   environment:
-  #     POSTGRES_USER: ${POSTGRES_USER}
-  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-  #     POSTGRES_DB: ${POSTGRES_DB}
-  #   volumes:
-  #     - postgres-data:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
-  #   networks:
-  #     - geth_network
-
-  # # graph-ipfs: 서브그래프 데이터 저장을 위한 IPFS 노드
-  # graph-ipfs:
-  #   image: graphprotocol/ipfs-node
-  #   container_name: graph_ipfs
-  #   ports:
-  #     - "5001:5001" # IPFS API
-  #   volumes:
-  #     - ipfs-data:/data/ipfs
-  #   networks:
-  #     - geth_network
-
-  # # graph-redis: 캐싱을 위한 Redis
-  # graph-redis:
-  #   image: redis:latest
-  #   container_name: graph_redis
-  #   ports:
-  #     - "6379:6379"
-  #   networks:
-  #     - geth_network
-
-  # # graph-node: The Graph의 핵심 인덱싱 노드
-  # graph-node:
-  #   image: graphprotocol/graph-node
-  #   container_name: graph_node
-  #   depends_on:
-  #     - graph-postgres
-  #     - graph-ipfs
-  #     - geth
-  #   ports:
-  #     - "8000:8000" # JSON-RPC
-  #     - "8001:8001" # GraphQL
-  #     - "8020:8020" # Index Node
-  #   environment:
-  #     postgres_host: graph-postgres
-  #     postgres_user: ${POSTGRES_USER}
-  #     postgres_pass: ${POSTGRES_PASSWORD}
-  #     postgres_db: ${POSTGRES_DB}
-  #     ipfs: 'graph_ipfs:5001'
-  #     redis: 'graph_redis:6379'
-  #     # geth 노드를 'dev-chain'이라는 이름으로 연결
-  #     ethereum: 'dev-chain:http://geth:8545'
-  #   networks:
-  #     - geth_network
-
-networks:
-  geth_network:
-    driver: bridge
 
   # blockscout: should be another docker-compose.yml file from https://github.com/blockscout/blockscout/tree/master/docker-compose. Don't create a container in this file.
