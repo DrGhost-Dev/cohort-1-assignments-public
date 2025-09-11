@@ -23,7 +23,7 @@ done
 
 echo "Geth JSON-RPC is responding!"
 
-geth attach --exec 'loadScript("/app/prefund.js")' http://geth:8545
+geth attach --exec 'loadScript("/prefund.js")' http://ethereum:8545
 
 echo "Finished prefunding the account."
 

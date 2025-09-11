@@ -1,58 +1,22 @@
 version: "3.8"
 
-services:
-  #caddy:
+# services:
+  # caddy:
   # ngrok:
-  #sc-deployment-server:
-  geth:
-    image: ethereum/client-go:stable
-    container_name: geth
-    ports:
-      - "8545:8545"
-      - "8546:8546"
-      - "30303:30303"
-    volumes:
-      - ./geth-data:/root/.ethereum
-      - ./shared-data:/shared 
-      - ./geth-init:/app 
-      #- ./geth-data/genesis.json:/root/genesis.json
-    command:
-      - --datadir=/root/.ethereum
-      #- --networkid=1337
-      - --http
-      - --http.addr=0.0.0.0
-      - --http.port=8545
-      - --http.api=eth,net,web3,personal
-      - --http.corsdomain=*
-      - --http.vhosts=*
-      - --ws
-      - --ws.addr=0.0.0.0
-      - --ws.port=8546
-      - --ws.origins=*
-      - --nodiscover
-      - --dev
-      - --mine
-      - --miner.etherbase=0x0000000000000000000000000000000000000000
-    networks:
-      - geth_network
-  geth-init:
-    build: ./geth-init
-    container_name: geth-init
-    depends_on:
-      - geth 
-    volumes:
-      - ./geth-init:/app # 스크립트 파일 마운트
-      - ./shared-data:/shared # 초기화 완료 신호를 위한 공유 볼륨
-    working_dir: /app
-    entrypoint: ["/app/entrypoint.sh"]
-    networks:
-      - geth_network
-  #sc-deployer:
-  #graph-ipfs:
-  #graph-postgres:
-  #graph-redis:
-  #graph-node:
-
-
+  # sc-deployer:
+  # sc-deployment-server:
+  # geth:
+  # geth-init:
+  # graph-ipfs:
+  # graph-postgres:
+  # graph-redis:
+  # graph-node:
 
   # blockscout: should be another docker-compose.yml file from https://github.com/blockscout/blockscout/tree/master/docker-compose. Don't create a container in this file.
+
+volumes:
+  geth-data:
+
+networks:
+  geth-network:
+    driver: bridge
